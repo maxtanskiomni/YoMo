@@ -1,0 +1,35 @@
+{
+  "name": "Yomo",
+  "description": "A payment application using location to help decide recipient",
+  "slug": "yomo",
+  "privacy": "unlisted",
+  "sdkVersion": "16.0.0",
+  "version": "1.0.0",
+  "orientation": "portrait",
+  "primaryColor": "#015249",
+  "icon": "./assets/icons/logo.png",
+  "loading": {
+    "icon": "./assets/icons/logo.png",
+    "hideExponentText": true,
+    "backgroundColor": "#f4f7fb"
+  },
+  "packagerOpts": {
+    "assetExts": [
+      "ttf",
+      "mp4"
+    ]
+  },
+  "ios": {
+    "supportsTablet": false,
+    "bundleIdentifier": "cash.yomo.yomo"
+  },
+  "android": {
+    "package": "cash.yomo.yomo"
+  },
+  "isDetached": true,
+  "detach": {
+    "scheme": "exp45e05c47f8cf413dba0d38b861fa11e8",
+    "iosExpoViewUrl": "https://s3.amazonaws.com/exp-exponent-view-code/ios-v1.15.2-sdk16.0.0-df18e714-3618-4db8-81db-48efa205fba6.tar.gz",
+    "androidExpoViewUrl": "https://s3.amazonaws.com/exp-exponent-view-code/android-v1.15.1-sdk16.0.0-2448b7f4-9b6a-4fd0-906d-8bd7da336bd7.tar.gz"
+  }
+}
