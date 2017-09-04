@@ -1,6 +1,6 @@
 import React from 'react';
 import { Image,  Screen, TouchableOpacity } from '@shoutem/ui';
-import { TouchableHighlight, Alert, AppState, StyleSheet } from 'react-native';
+import { TouchableHighlight, Alert, AppState, StyleSheet, ActivityIndicator } from 'react-native';
 import Modal from 'react-native-simple-modal';
 import { connectStyle } from '@shoutem/theme';
 import { AccountsStore,UserStore, OrganizationStore, GeofencesStore, PreferencesStore } from '../stores';
@@ -19,6 +19,12 @@ class PaymentScreen extends React.Component {
 
   constructor (props) {
     super(props);
+  }
+
+  componentWillMount(){
+    if(AccountsStore.accounts.length==0){
+      Actions.account({});
+    }
   }
 
   @observable total = '0.00';
@@ -79,7 +85,10 @@ class PaymentScreen extends React.Component {
       payer_name: `${UserStore.user_data.firstName} ${UserStore.user_data.lastName}`,
       recip_name: organization.org_name,
       recipient: organization.poc_email,
+    }
 
+    if(organization.hasOwnProperty('google_id')){
+      trans_data.to_be_paid = organization.google_id;
     }
 
     const trans_key = firebase.database.ref().child('transactions').push().key;
@@ -100,7 +109,8 @@ class PaymentScreen extends React.Component {
     }
     stripe_data = stripe_data.join("&");
 
-    console.log(stripe_data)
+    // console.log(stripe_data);
+     this.paymentResponse = 'We are sending your gift now!  One second please....';
 
     fetch('https://yomo-76a36.appspot.com/charges', {
       method: 'POST',
@@ -108,8 +118,13 @@ class PaymentScreen extends React.Component {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: stripe_data
-    }).then((response) => {
+    })
+    .then((response) => {
       console.log('this is the response', response);
+      this.refs.spinner.zoomOut(400);
+      this.refs.message.zoomOut(400).then((e)=>{
+        this.refs.message.fadeIn(400);
+      });
       if (!response.ok) {
           throw Error(response._bodyText);
       }
@@ -127,15 +142,20 @@ class PaymentScreen extends React.Component {
         params.recipient = organization.poc_email;
         firebase.insertFB('subscriptions', params);
       }
-
     })
     .catch((e) => {
       console.log('this is the error:',e);
-      debugger
+      // debugger
       this.paymentResponse = 'There has been an error with gift.  Please check your connection and try again :)';
+    }).then((e)=>{
+      setTimeout(() => {
+        this.refs.content.fadeOut(0).then(()=>{
+          this.paymentConfirmed=false;
+          this.refs.content.fadeInUp(400);
+        });
+      }, 5000);
     });
 
-    setTimeout(() => {this.paymentConfirmed=false;}, 5000);
     this.total = '0.00';
   }
 
@@ -194,7 +214,10 @@ class PaymentScreen extends React.Component {
       content = (
         <View style={{flex:10,flexDirection:'column',justifyContent:'center',alignItems:'center'}}>
           <View style={{flex:1}}/>
-          <Text style={styles.thankYouText} animation={"fadeIn"}>{this.paymentResponse}</Text>
+          <Text style={styles.thankYouText} ref='message' animation={"fadeInUp"} duration={400}>{this.paymentResponse}</Text>
+          <View style={{flex:1}} ref='spinner' animation={"fadeInUp"} duration={400}>
+            <ActivityIndicator color='#fff' size='large' style={[{paddingTop:15}, {transform: [{scale: 1.5}]}]}/>
+          </View>
           <View style={{flex:1}}/>
         </View>
       );
@@ -314,7 +337,9 @@ class PaymentScreen extends React.Component {
 
         </View>
 
-        {content}
+        <View ref='content' style={{flex:10}} animation={'fadeInUp'} duration={400}>
+          {content}
+        </View>
 
         <Modal
           modalStyle={styles.modal}

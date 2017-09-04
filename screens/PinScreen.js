@@ -34,7 +34,7 @@ class PinScreen extends React.Component {
       return
     }
 
-    Actions.payment();
+    this.props.is_active ? Actions.pop() : Actions.payment();
   }
 
 

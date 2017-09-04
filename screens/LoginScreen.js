@@ -6,7 +6,7 @@ import Modal from 'react-native-simple-modal';
 import {observer} from 'mobx-react';
 import {action, runInAction,observable} from 'mobx';
 
-import { TextInput } from 'react-native';
+import { TextInput, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { Actions } from 'react-native-router-flux';
 
 import { firebase } from '../utilities/firebase_api'
@@ -31,6 +31,7 @@ class LoginScreen extends React.Component {
     const {onNavigate} = this.props;
 
     return (
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <Screen style={styles.container}>
 
         <Image
@@ -111,6 +112,7 @@ class LoginScreen extends React.Component {
         </Modal>
 
       </Screen>
+      </TouchableWithoutFeedback>
     );
   }
 

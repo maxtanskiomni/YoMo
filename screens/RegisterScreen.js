@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, TextInput, Alert, Picker, Keyboard} from 'react-native';
+import { View, Text, ScrollView, TextInput, Alert, Picker, Keyboard, ActivityIndicator} from 'react-native';
 import { connectStyle } from '@shoutem/theme';
 import { Title,Image, Screen, TouchableOpacity, NavigationBar, Icon } from '@shoutem/ui';
 
@@ -15,6 +15,7 @@ import { firebase } from '../utilities/firebase_api'
 import { Actions } from 'react-native-router-flux';
 
 import * as Animatable from 'react-native-animatable';
+import Modal from 'react-native-simple-modal';
 
 @observer
 class RegisterScreen extends React.Component {
@@ -25,7 +26,7 @@ class RegisterScreen extends React.Component {
 	@observable password = '';
 	@observable pin = '';
   @observable userRegistered = false;
-	@observable isCompany = true;
+	@observable isCompany = false;
 	@observable business_name = '';
 	@observable business_tax_id = '';
 	@observable day = '';
@@ -39,6 +40,7 @@ class RegisterScreen extends React.Component {
 	@observable zip = '';
 	@observable showPicker = false;
 	@observable isSolo = false;
+	@observable processing = false;
 
   @observable passwordIsVisible = false;
 
@@ -53,11 +55,18 @@ class RegisterScreen extends React.Component {
 	}
 
 	createUser = () => {
-		firebase.register(this.email, this.password)
+
+		this.processing = true;
+		this.month = this.month < 10 ? this.month.substr(1) : this.month;
+		this.day = this.day < 10 ? this.day.substr(1) : this.day;
+
 		let data = {
 			firstName: this.firstName,
 			lastName: this.lastName,
 			email: this.email,
+			mobile_fence:{
+				isMobileOn: false,
+			},
 			dob: {
 				day: this.day,
 				month: this.month,
@@ -67,17 +76,7 @@ class RegisterScreen extends React.Component {
 			default_account: 0,
 		}
 
-		let user_key = firebase.insertFB('users', data)
-
-		let preferences = {
-			facebook_checkin: true,
-			location_autodetect: true,
-			location_notifs: true,
-			push_notifs: true,
-			user: this.email,
-		}
-
-		firebase.insertFB('preferences', preferences);
+		let user_key = firebase.insertFB('users', data);
 
 		let params = {
       first_name: this.firstName,
@@ -85,11 +84,7 @@ class RegisterScreen extends React.Component {
       business_type: 'individual',
       email: this.email,
 			user_key: user_key,
-			dob: {
-				day: this.day,
-				month: this.month,
-				year: this.year,
-			},
+			dob: '{"day": "'+this.day+'","month": "'+this.month+'","year": "'+this.year+'"}',
     }
 
 		if(this.isCompany){
@@ -99,22 +94,17 @@ class RegisterScreen extends React.Component {
 				params.business_name = this.business_name;
 			}
 			params.personal_id_number = this.ssn;
-			params.address = {
-				city: this.city,
-				line1: this.line1,
-				state: this.region,
-				postal_code: this.zip,
-			};
+			params.address = '{"city": "'+this.city+'","line1": "'+this.line1+'","state": "'+this.region+'","postal_code": "'+this.zip+'"}';
 		}
 
     var new_user_data = [];
     for (var property in params) {
       let encodedKey = encodeURIComponent(property);
       let encodedValue = encodeURIComponent(params[property]);
-      stripe_data.push(encodedKey + "=" + encodedValue);
+      new_user_data.push(encodedKey + "=" + encodedValue);
     }
-    new_user_data = stripe_data.join("&");
-
+    new_user_data = new_user_data.join("&");
+		https://1245f081.ngrok.io
 		fetch('https://yomo-76a36.appspot.com/accounts/add_user', {
       method: 'POST',
       headers: {
@@ -128,34 +118,53 @@ class RegisterScreen extends React.Component {
       }
       return response;
     })
-    .then((data) => {
+    .then((res) => {
 			this.userRegistered = true;
+
+			firebase.register(this.email, this.password);
+
+			let preferences = {
+				facebook_checkin: true,
+				location_autodetect: true,
+				location_notifs: true,
+				push_notifs: true,
+				user: this.email,
+			}
+
+			firebase.insertFB('preferences', preferences);
+
     })
     .catch((e) => {
       console.log('this is the error:',e);
-      Alert.alert('Hmmmm', 'There was an error registering your account.  Please review your inputs and try again!')
-    });
+      Alert.alert('Hmmmm', 'There was an error registering your account.  Please review your inputs and try again!');
+
+			this.database.ref('users/' + user_key).remove();
+    }).then((e)=>{
+			this.processing = false;
+		});
 	}
 
   render() {
     const styles = this.props.style;
     const finishDisabled = (
-      this.password === ''
+			this.password.length < 6
       || this.pin.length !== 4
       || !this.email.includes('@')
       || this.firstName.length === 0
       || this.lastName.length === 0
 			|| this.month.lenth < 2
 			|| this.day.length < 2
-			|| this.year.length < 4);
+			|| this.year.length < 4
+			|| this.processing);
 
 		const finishDisabled2 = (
 			this.line1 === ''
 			|| this.ssn === ''
-			|| ((this.business_name === '' || this.business_tax_id === '') && !this.isSolo)
+			|| (this.isSolo ? false : (this.business_name === '' || this.business_tax_id === ''))
 			|| this.city === ''
 			|| this.region === ''
-			|| this.year.zip < 5);
+			|| this.zip < 5
+			|| this.processing);
 
     let content = null
 
@@ -322,7 +331,7 @@ class RegisterScreen extends React.Component {
 							</TouchableOpacity>
 						</View>
 						<View style={Object.assign({opacity:finishDisabled2 ? 0.6 : 1}, {...styles.buttonsView})}>
-							<TouchableOpacity disabled={ finishDisabled2 } style={styles.finishButton} onPress={()=>{this.showPicker = false; this.createUser}}>
+							<TouchableOpacity disabled={ finishDisabled2 } style={styles.finishButton} onPress={this.createUser}>
 								<Text style={styles.finishText}>Finish</Text>
 							</TouchableOpacity>
 						</View>
@@ -559,6 +568,17 @@ class RegisterScreen extends React.Component {
 
 				</ScrollView>
 
+				<Modal
+          modalStyle={styles.modal}
+          open={this.processing}>
+
+          <View style={styles.modalContent}>
+            <Text>Hi {this.firstName}!  We are registering you now.  Give us one sec to get you all set up.</Text>
+            <ActivityIndicator color='#49A94D' size='large' style={[{paddingTop:15}, {transform: [{scale: 1.5}]}]}/>
+
+          </View>
+
+        </Modal>
       </Screen>
     );
   }
@@ -699,6 +719,16 @@ const styles = {
 		alignItems:'center',
 		backgroundColor:'#49734B',
 		marginBottom:8
+	},
+	modal:{
+		padding:15,
+	},
+
+	modalContent:{
+		padding:20,
+		flexDirection:'column',
+		justifyContent:'center',
+		alignItems:'center',
 	},
 
 };

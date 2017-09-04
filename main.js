@@ -59,6 +59,7 @@ class App extends Component {
 
     this.state = {
       appIsReady: false,
+      locked: false,
     };
 
     this.onNavigate = this.onNavigate.bind(this);
@@ -78,10 +79,12 @@ class App extends Component {
     AppState.removeEventListener('change', this._handleAppStateChange);
   }
 
-  _handleAppStateChange(currentAppState) {
-    if(currentAppState != 'active' && UserStore.logged_in){
-      Actions.pin({type: 'reset'});
-    }else{
+  _handleAppStateChange = (currentAppState) => {
+    if(currentAppState === 'background' && UserStore.logged_in && !this.state.locked){
+      Actions.pin({is_active: true});
+      this.state.locked = true;
+    }else if(currentAppState === 'active'){
+      this.state.locked = false;
       Location.getCurrentPositionAsync({});
     }
   }
@@ -105,7 +108,7 @@ class App extends Component {
           require('./assets/icons/check.png'),
           require('./assets/icons/outline.png'),
           require('./assets/icons/check-outline.png'),
-          require('./assets/icons/search_white.png')
+          require('./assets/icons/search_white.png'),
         ],
         fonts: [
           { 'Rubik-Regular': require('./assets/fonts/Rubik-Regular.ttf') },

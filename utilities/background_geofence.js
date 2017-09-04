@@ -164,26 +164,28 @@ class BackgroundGeofenceAPI {
       return
     }
     // need to parseInt
-    var id = parseInt(params.identifier);
-    if (isNaN(id)) {
-      id = params.identifier;
+    let id = params.identifier;
+    if(id.indexOf('~')>0){
+      params.identifier = id.substr(0, id.indexOf('~'));
     }
     //console.log('this is logging')
     //console.log(params)
 
-    OrganizationStore.get(id);
+    OrganizationStore.get(params);
 
     if(params.hasOwnProperty('extras')){
-      let localNotification = {
-      	title: params.extras.noti_head,
-        body: params.extras.noti_body,
-        ios:{
-        	sound: true,
-        },
-        android: {
-        	sound: true,
-          sticky:false,
-        },
+      if(params.hasOwnProperty('noti_head')){
+        let localNotification = {
+        	title: params.extras.noti_head,
+          body: params.extras.noti_body,
+          ios:{
+          	sound: true,
+          },
+          android: {
+          	sound: true,
+            sticky:false,
+          },
+        }
       }
 
       if(PreferencesStore.preferences.location_notifs && notifications.length === 0){
@@ -234,10 +236,10 @@ class BackgroundGeofenceAPI {
           if(isPlace){
             let id = geofence.identifier;
             if(id.indexOf('~')>0){
-            	id = id.substr(0, id.indexOf('~'));
+            	geofence.identifier = id.substr(0, id.indexOf('~'));
             }
 
-            OrganizationStore.get(id);
+            OrganizationStore.get(geofence);
           }
         });
       });

@@ -43,7 +43,7 @@ class SearchScreen extends React.Component {
         listViewDisplayed={true}
         listUnderlayColor = "#49734B"
         onPress={(data, details = null) => {
-          //console.log(data);
+          console.log(data);
           //console.log(details);
 
           if(data.types.indexOf('establishment') === -1){
@@ -54,6 +54,7 @@ class SearchScreen extends React.Component {
               poc_email: null,
               stripe_user_id: 'unassigned',
               address: data.structured_formatting.secondary_text,
+              google_id: data.id,
             }
             OrganizationStore.set(organization);
             Actions.pop();

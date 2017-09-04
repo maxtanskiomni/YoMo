@@ -217,26 +217,35 @@ class FirebaseAPI{
     });
   }
 
-  getOrganization(geofenceID){
+  getOrganization(geofence){
     //console.log('This is the geofence ID: ', geofenceID)
-    this.organizationsRef.orderByChild("geofenceID").equalTo(geofenceID)
-      .once('value', (snapshot) => {
+    if(geofence.identifier === "unassigned" && geofence.extras.email != UserStore.user_data.email){
+      let personal_organization = {
+        org_name: geofence.extras.first_name+" "+goefence.extras.last_name,
+        poc_email: 'max.tanski@yomo.cash',
+        stripe_user_id: geofence.identifier,
+        goefenceID: geofence.identifier,
+      }
+    }else{
+      this.organizationsRef.orderByChild("geofenceID").equalTo(geofence.identifier)
+        .once('value', (snapshot) => {
 
-        organization = snapshot.val();
+          organization = snapshot.val();
 
-        if(!organization){
-          OrganizationStore.set({org_name:null, geofenceID:-1})
+          if(!organization){
+            OrganizationStore.set({org_name:null, geofenceID:-1})
+          }
+
+          snapshot.forEach((data) => {
+            OrganizationStore.firebase_key = data.key;
+        });
+
+        if(organization != null){
+          OrganizationStore.set(Object.values(organization)[0]);
         }
 
-        snapshot.forEach((data) => {
-          OrganizationStore.firebase_key = data.key;
       });
-
-      if(organization != null){
-        OrganizationStore.set(Object.values(organization)[0]);
-      }
-
-    });
+    }
   }
 
   getUserTransactions(){
