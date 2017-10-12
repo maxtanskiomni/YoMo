@@ -21,12 +21,6 @@ class PaymentScreen extends React.Component {
     super(props);
   }
 
-  componentWillMount(){
-    if(AccountsStore.accounts.length==0){
-      Actions.account({});
-    }
-  }
-
   @observable total = '0.00';
   @observable modalOpen = false;
   @observable paymentConfirmed = false;
@@ -81,6 +75,8 @@ class PaymentScreen extends React.Component {
       amount: amount,
       date: today,
       time: time,
+      destination: org_stripe_id,
+      recip_geofenceID: GeofencesStore.activeFence.identifier,
       payer: UserStore.user.email,
       payer_name: `${UserStore.user_data.firstName} ${UserStore.user_data.lastName}`,
       recip_name: organization.org_name,

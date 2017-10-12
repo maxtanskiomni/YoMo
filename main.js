@@ -80,11 +80,10 @@ class App extends Component {
   }
 
   _handleAppStateChange = (currentAppState) => {
-    if(currentAppState === 'background' && UserStore.logged_in && !this.state.locked){
+    is_pin = Actions.currentRouter.currentRoute === 'pin';
+    if(currentAppState === 'background' && UserStore.logged_in && !is_pin){
       Actions.pin({is_active: true});
-      this.state.locked = true;
     }else if(currentAppState === 'active'){
-      this.state.locked = false;
       Location.getCurrentPositionAsync({});
     }
   }

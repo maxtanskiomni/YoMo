@@ -150,6 +150,7 @@ class FirebaseAPI{
       accounts = snapshot.val();
       if(!accounts){
         AccountsStore.accounts = [];
+        Actions.account();
         return
       }
       var accounts_array = Object.values(accounts);
